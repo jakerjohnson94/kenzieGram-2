@@ -1,0 +1,8 @@
+include head
+h1.center KenzieGram 
+include uploadForm
+
+    .row
+      each item in items
+        .col.s4
+          img(src= `./uploads/${item}`)
