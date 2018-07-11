@@ -40,13 +40,13 @@ app.get('/', function(req, res) {
     if (err) console.log(err);
     items = items.slice(1, items.length).sort((a, b) => a < b);
 
-    res.render('main.pug', { items: items });
+    res.render('index.pug', { items: items });
   });
 });
 
 app.post('/public/uploads', upload.single('myFile'), function(req, res, next) {
   if (!req.file) {
-    res.send(console.log('error, no file to upload'));
+    res.end(console.log('error, no file to upload'));
   } else {
     console.log('Uploaded: ' + req.file.filename);
     path.extname(req.file.originalname);

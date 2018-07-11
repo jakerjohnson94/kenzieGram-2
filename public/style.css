@@ -1,7 +1,13 @@
 img {
-  height: 28vh;
+  max-height: 40vh;
+  padding-bottom: 1.5em;
 }
-
+nav {
+  margin-bottom: 1.5em;
+}
+.title {
+  position: relative;
+}
 li {
   text-decoration: none;
 }
