@@ -28,19 +28,42 @@ const storage = multer.diskStorage({
   filename: function(req, file, cb) {
     var originalname = file.originalname;
     var extension = originalname.split('.');
-    filename = +Date.now() + '.' + extension[extension.length - 1];
+    filename = Date.now() + '.' + extension[extension.length - 1];
     cb(null, filename);
   },
 });
 const upload = multer({ storage: storage, dest: publicPath, fileFilter: fileFilter });
 
 app.use(express.static(publicPath));
+app.use(express.json());
+
 app.get('/', function(req, res) {
   fs.readdir('./public/uploads', function(err, items) {
     if (err) console.log(err);
-    items = items.slice(1, items.length).sort((a, b) => a < b);
+    if (items[0] === '.DS_Store') items.shift();
 
     res.render('index.pug', { items: items });
+  });
+});
+
+app.post('/latest', function(req, res) {
+  fs.readdir('./public/uploads', function(err, items) {
+    if (err) console.log(err);
+    res.status(201);
+    let modified = [];
+
+    items.forEach(item => modified.push([item, fs.statSync(`./public/uploads/${item}`).mtimeMs]));
+    let newTimestamp = modified.sort((a, b) => a[1] < b[1])[0][1];
+    // modified = modified.sort((a, b) => a < b)[0];
+
+    // items = items.map(item => (item.timestamp = fs.statSync(item).mtimeMs));
+    console.log('req.body.after: ', req.body.after);
+    modified = modified.filter(a => a[1] > req.body.after);
+
+    res.send({
+      timestamp: newTimestamp,
+      photos: modified,
+    });
   });
 });
 
@@ -48,9 +71,15 @@ app.post('/public/uploads', upload.single('myFile'), function(req, res, next) {
   if (!req.file) {
     res.end(console.log('error, no file to upload'));
   } else {
+    const timestamp = Date.now();
+    req.file.timestamp = timestamp;
+    console.log(req.file);
+
+    uploadedFiles.push(req.file);
+
     console.log('Uploaded: ' + req.file.filename);
     path.extname(req.file.originalname);
-    uploadedFiles.push(req.file.filename);
+    // uploadedFiles.push(req.file.filename);
     res.render('success.pug', { port: port });
   }
 });

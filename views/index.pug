@@ -1,11 +1,14 @@
 include head
 
-.row.grid
+.row.grid#photoOut
   each item in items
     
     .col.s12.m6.l4.xl4.center
       img.grid-item(src= `./uploads/${item}`)
+
 .row
   .divider
   .container
     include uploadForm
+
+script(src="script.js")
