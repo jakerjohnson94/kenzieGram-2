@@ -1,5 +1,6 @@
 let photoOutput = document.getElementById('photoOut');
 let timestamp = Date.now();
+let errCount = 0;
 async function pollImages() {
   var after = {
     after: timestamp,
@@ -16,8 +17,11 @@ async function pollImages() {
         return response.json();
       } else throw await response.json();
     })
+
     .then(
       await function(data) {
+        document.getElementById('errorOut').textContent = '';
+
         for (let i = 1; i < data.length; i++) {
           let img = data[i];
         }
@@ -29,8 +33,23 @@ async function pollImages() {
         timestamp = data.timestamp;
         // poll again after waiting 5 seconds
         setTimeout(pollImages, 5000);
+        return true;
       }
-    );
+    )
+    .catch(error => {
+      errCount++;
+
+      console.log(errCount + error);
+      if (errCount === 1) {
+        document.getElementById('errorOut').textContent =
+          'Connection Failed, Attempting to Reconnect...';
+        return setTimeout(pollImages, 3000);
+      }
+      if (errCount === 2) {
+        return (document.getElementById('errorOut').textContent =
+          'Reconnect Failed, Closing Server.');
+      }
+    });
 }
 
 function appendGalleryPhoto(photo) {
