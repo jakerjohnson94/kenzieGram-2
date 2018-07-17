@@ -1,8 +1,8 @@
-let photoOutput = document.getElementById('photoOut');
+const photoOutput = document.getElementById('photoOut');
 let timestamp = Date.now();
 let errCount = 0;
-async function pollImages() {
-  var after = {
+function pollImages() {
+  let after = {
     after: timestamp,
   };
   fetch('/latest', {
@@ -12,33 +12,15 @@ async function pollImages() {
     },
     body: JSON.stringify(after),
   })
-    .then(async function(response) {
-      if (response.ok) {
-        return response.json();
-      } else throw await response.json();
+    .then(response => response.json())
+    .then(data => {
+      document.getElementById('errorOut').textContent = '';
+      if (data.photos.length) data.photos.forEach(photo => appendGalleryPhoto(photo[0]));
+      timestamp = data.timestamp;
+      setTimeout(pollImages, 5000);
     })
-
-    .then(
-      await function(data) {
-        document.getElementById('errorOut').textContent = '';
-
-        for (let i = 1; i < data.length; i++) {
-          let img = data[i];
-        }
-        if (data.photos.length) {
-          for (let p of data.photos) {
-            appendGalleryPhoto(p[0]);
-          }
-        }
-        timestamp = data.timestamp;
-        // poll again after waiting 5 seconds
-        setTimeout(pollImages, 5000);
-        return true;
-      }
-    )
     .catch(error => {
       errCount++;
-
       console.log(errCount + error);
       if (errCount === 1) {
         document.getElementById('errorOut').textContent =

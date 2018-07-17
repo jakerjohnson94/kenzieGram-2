@@ -6,14 +6,12 @@ const publicPath = './public/';
 const port = 3000;
 const app = express();
 
-const uploadedFiles = [];
-
 app.set('views', './views');
 app.set('view engine', 'pug');
 
 function fileFilter(req, file, cb) {
-  var type = file.mimetype;
-  var typeArray = type.split('/');
+  let type = file.mimetype;
+  let typeArray = type.split('/');
   if (typeArray[0] == 'image') {
     cb(null, true);
   } else {
@@ -26,8 +24,8 @@ const storage = multer.diskStorage({
     cb(null, './public/uploads/');
   },
   filename: function(req, file, cb) {
-    var originalname = file.originalname;
-    var extension = originalname.split('.');
+    let originalname = file.originalname;
+    let extension = originalname.split('.');
     filename = Date.now() + '.' + extension[extension.length - 1];
     cb(null, filename);
   },
@@ -39,7 +37,7 @@ app.use(express.json());
 
 app.get('/', function(req, res) {
   fs.readdir('./public/uploads', function(err, items) {
-    if (err) console.log(err);
+    if (err) throw new Error(err);
     if (items[0] === '.DS_Store') items.shift();
 
     res.render('index.pug', { items: items });
@@ -48,21 +46,18 @@ app.get('/', function(req, res) {
 
 app.post('/latest', function(req, res) {
   fs.readdir('./public/uploads', function(err, items) {
-    if (err) console.log(err);
+    if (err) throw new Error(err);
     res.status(201);
-    let modified = [];
+    let newPhotos = [];
 
-    items.forEach(item => modified.push([item, fs.statSync(`./public/uploads/${item}`).mtimeMs]));
-    let newTimestamp = modified.sort((a, b) => a[1] < b[1])[0][1];
-    // modified = modified.sort((a, b) => a < b)[0];
+    items.forEach(item => newPhotos.push([item, fs.statSync(`./public/uploads/${item}`).mtimeMs]));
+    let newTimestamp = newPhotos.sort((a, b) => a[1] < b[1])[0][1];
 
-    // items = items.map(item => (item.timestamp = fs.statSync(item).mtimeMs));
-    console.log('req.body.after: ', req.body.after);
-    modified = modified.filter(a => a[1] > req.body.after);
+    newPhotos = newPhotos.filter(a => a[1] > req.body.after);
 
     res.send({
       timestamp: newTimestamp,
-      photos: modified,
+      photos: newPhotos,
     });
   });
 });
@@ -75,12 +70,15 @@ app.post('/public/uploads', upload.single('myFile'), function(req, res, next) {
     req.file.timestamp = timestamp;
     console.log(req.file);
 
-    uploadedFiles.push(req.file);
+    // uploadedFiles.push(req.file);
 
     console.log('Uploaded: ' + req.file.filename);
     path.extname(req.file.originalname);
-    // uploadedFiles.push(req.file.filename);
-    res.render('success.pug', { port: port });
+
+    res.render('success.pug', {
+      port: port,
+      file: req.file.filename,
+    });
   }
 });
 
